@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>SecureDrop</title>
+
+<link rel="stylesheet"
+href="style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="card">
+
+
+<h1>
+🔐 SecureDrop
+</h1>
+
+
+<p>
+P2P File Transfer
+</p>
+
+
+<button onclick="createRoom()">
+Create Room
+</button>
+
+
+<h2 id="room">
+</h2>
+
+
+<input
+id="join"
+placeholder="Enter Code">
+
+
+<button onclick="joinRoom()">
+Join Room
+</button>
+
+
+
+<input
+type="file"
+id="file">
+
+
+<button onclick="sendFile()">
+Send File
+</button>
+
+
+<h3 id="status">
+Waiting...
+</h3>
+
+
+
+</div>
+
+
+
+<script src=
+"https://cdn.socket.io/4.7.5/socket.io.min.js">
+</script>
+
+
+<script src="app.js"></script>
+
+
+</body>
+
+</html>
