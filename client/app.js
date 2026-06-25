@@ -1,5 +1,5 @@
-const socket=io(
-"https://securedrop-server.onrender.com"
+const socket = io(
+"https://file-transfer-s7fu.onrender.com"
 );
 
 let peer;
