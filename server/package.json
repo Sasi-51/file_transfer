@@ -1,0 +1,13 @@
+{
+"name":"securedrop-server",
+"version":"1.0",
+"main":"server.js",
+"scripts":{
+"start":"node server.js"
+},
+"dependencies":{
+"express":"latest",
+"socket.io":"latest",
+"cors":"latest"
+}
+}
