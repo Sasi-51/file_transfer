@@ -1,53 +1,92 @@
-const express=require("express");
-const http=require("http");
-const cors=require("cors");
-const {Server}=require("socket.io");
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const multer = require("multer");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
+const app = express();
 
-const app=express();
+const server = http.createServer(app);
 
-app.use(cors());
-
-
-const server=http.createServer(app);
-
-
-const io=new Server(server,{
-cors:{
-origin:"*"
-}
+const io = new Server(server,{
+    cors:{
+        origin:"*"
+    }
 });
 
+app.use(cors());
+app.use(express.json());
+
+
+// serve frontend
+app.use(express.static(path.join(__dirname,"public")));
+
+
+const uploadFolder = path.join(__dirname,"uploads");
+
+
+if(!fs.existsSync(uploadFolder)){
+    fs.mkdirSync(uploadFolder);
+}
+
+
+const storage = multer.diskStorage({
+
+destination:(req,file,cb)=>{
+    cb(null,uploadFolder);
+},
+
+filename:(req,file,cb)=>{
+    cb(null,Date.now()+"-"+file.originalname);
+}
+
+});
+
+
+const upload = multer({
+    storage
+});
 
 
 let rooms={};
 
 
 
-io.on("connection",(socket)=>{
+function createCode(){
+
+return Math.random()
+.toString(36)
+.substring(2,7)
+.toUpperCase();
+
+}
 
 
-console.log(
-"Device connected:",
-socket.id
-);
+
+// create room
+app.get("/create-room",(req,res)=>{
+
+let code=createCode();
+
+
+rooms[code]={
+    files:[]
+};
+
+
+setTimeout(()=>{
+
+delete rooms[code];
+
+},10*60*1000);
 
 
 
-socket.on(
-"create-room",
-(room)=>{
-
-
-rooms[room]=true;
-
-socket.join(room);
-
-
-socket.emit(
-"room-created",
-room
-);
+res.json({
+    code
+});
 
 
 });
@@ -55,69 +94,128 @@ room
 
 
 
+// upload file
 
-socket.on(
-"join-room",
-(room)=>{
-
-
-if(rooms[room])
-{
-
-socket.join(room);
+app.post("/upload/:code",
+upload.single("file"),
+(req,res)=>{
 
 
-io.to(room)
-.emit(
-"peer-ready"
+let code=req.params.code;
+
+
+if(!rooms[code]){
+
+return res.status(404).json({
+error:"room expired"
+});
+
+}
+
+
+
+let file={
+
+name:req.file.originalname,
+
+file:req.file.filename
+
+};
+
+
+
+rooms[code].files.push(file);
+
+
+
+io.to(code).emit(
+"file",
+file
+);
+
+
+
+res.json({
+success:true
+});
+
+
+});
+
+
+
+
+// download
+
+app.get("/download/:file",(req,res)=>{
+
+
+let filePath =
+path.join(
+uploadFolder,
+req.params.file
+);
+
+
+res.download(filePath);
+
+
+});
+
+
+
+
+// socket
+
+io.on("connection",(socket)=>{
+
+
+socket.on("join",(code)=>{
+
+
+if(rooms[code]){
+
+
+socket.join(code);
+
+
+socket.emit(
+"files",
+rooms[code].files
 );
 
 
 }
 
+
+});
+
+
 });
 
 
 
 
+// homepage fallback
 
-socket.on(
-"signal",
-(data)=>{
+app.get("*",(req,res)=>{
 
-
-socket.to(data.room)
-.emit(
-"signal",
-data.signal
+res.sendFile(
+path.join(__dirname,"public","index.html")
 );
 
-
 });
 
 
 
+const PORT =
+process.env.PORT || 5000;
 
-socket.on(
-"disconnect",
-()=>{
+
+server.listen(PORT,()=>{
 
 console.log(
-"left"
-)
-
-});
-
-
-});
-
-
-
-
-
-server.listen(
-5000,
-()=>console.log(
-"SERVER RUNNING"
-)
+"SERVER RUNNING ON "+PORT
 );
+
+});
