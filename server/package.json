@@ -1,5 +1,5 @@
 {
-  "name": "file_transfer-server",
+  "name": "securedrop-server",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
